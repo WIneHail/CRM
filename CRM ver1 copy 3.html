@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <title>>CRM System</title>
+        <link href="My_style.css" rel="stylesheet" type="text/css" media="screen" />
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="wrapper-bgbtm">
+                <div id="header">
+                    <div id="logo">
+                        <h1><a href="#">CRM </a></h1>
+                        <p>Design by <a href=https://vk.com/ rel="nofollow">WineHAIL</a></p>
+                    </div>
+                </div>
+<!-- end #header -->
+		<div id="menu">
+			<ul>
+				<li class="current_page_item"><a href="#">Calendar</a></li>
+				<li class="current_page_item"><a onclick="PuPPanel (1)">Create new Lead</a></li>
+				<li class="current_page_item"><a onclick="PuPPanel (3)">Create new Event</a></li>
+				<li class="current_page_item"><a onclick ="AllLeads ()">All leads</a></li>
+                <li class="current_page_item"><a onclick="PuPPanel (2)">New Contact</a></li>
+                <li class="current_page_item"><a onclick="PuPPanel (4)">Event List</a></li>
+			</ul>
+        </div>
+<!-- end #menu -->
+        <script>
+            "use strict"; 
+            function Lead (id, INN, title, potential, active, contacts) {
+                this.id = id;
+                this.INN = INN;
+                this.title = title;
+                this.potential = potential;
+                this.active = active;
+                this.contacts = contacts;
+            };
+            function Contact (name, surname, bt, p_n1, p_n2) {
+                this.name = name;
+                this.surname = surname;
+                this.bt = bt;
+                this.p_n1 = p_n1;
+                this.p_n2 = p_n2;
+            }
+            function Event (id, reminderDate, title, type, contact, comment) {
+                this.id = id;
+                this.reminderDate = reminderDate;
+                this.title = title;
+                this.type = type;
+                this.contact = contact;
+                this.comment = comment;
+            }
+            function Comment (date, commentData) {
+                this.date = date;
+                this.commentData = commentData;
+            }
+            function Sales (id, sid, date, name, status, price) {
+                this.id = id;
+                this.sid = sid;
+                this.date = date;
+                this.name = name;
+                this.status = status;
+                this.price = price;
+            }
+            let events = [];
+            let leads = [];
+            let sales = [];
+            function PuPPanel (n) {
+                document.getElementById("modal"+n).style.display = "block";
+                if (n == 1) {
+                    document.getElementById("modal2").style.display = "none";
+                    document.getElementById("modal3").style.display = "none";
+                    document.getElementById("modal4").style.display = "none";
+                } else if (n == 2){
+                    document.getElementById("modal1").style.display = "none";
+                    document.getElementById("modal3").style.display = "none";
+                    document.getElementById("modal4").style.display = "none";
+                }else if (n == 3){
+                    document.getElementById("modal2").style.display = "none";
+                    document.getElementById("modal1").style.display = "none";
+                    document.getElementById("modal4").style.display = "none";
+                }else if (n == 4){
+                    document.getElementById("modal2").style.display = "none";
+                    document.getElementById("modal1").style.display = "none";
+                    document.getElementById("modal3").style.display = "none";                    
+                };
+            };
+            function CloseP (n) {
+                document.getElementById("modal"+n).style.display = "none";
+                ci = undefined;
+                document.getElementsByClassName("LeadsList")[0].disabled = false;
+                ni = undefined;
+                document.getElementsByClassName("LeadsList")[1].disabled = false;
+                document.getElementById("CommentList").innerText = "";
+            };
+            function GetContactEdit () {
+                let id;
+                let n = leads.length; 
+                let ttitle = document.getElementsByClassName("LeadsList")[1][0].innerHTML;
+                for (let i = 0; i<n; i++){
+                    let ctitle = leads[i]["title"];
+                    if (ctitle == ttitle){
+                        id = i;
+                        break;
+                    }
+                }
+                let contactArray = leads[id]["contacts"];
+                let CL = document.getElementById("ContactList");
+                CL.innerHTML = "";
+                let keys = Object.keys(leads[id].contacts);
+                for (let i = 0; i < keys.length; i++ ){
+                    let contact = contactArray[i]["name"]+ " " + contactArray[i]["surname"] + " " + contactArray[i]["bt"]; 
+                    let opt = document.createElement("option");
+                    opt.innerHTML = contact;
+                    CL.append(opt);
+                }; 
+            } 
+            function GetContact (select) {
+                let id = select.value;
+                let contactArray = leads[id]["contacts"];
+                let CL = document.getElementById("ContactList");
+                CL.innerHTML = "";
+                let keys = Object.keys(leads[id].contacts);
+                for (let i = 0; i < keys.length; i++ ){
+                    let contact = contactArray[i]["name"]+ " " + contactArray[i]["surname"] + " " + contactArray[i]["bt"]; 
+                    let opt = document.createElement("option");
+                    opt.innerHTML = contact;
+                    CL.append(opt);
+                };     
+            };           
+            function NewContact (li, ci) {
+                let id;
+                let i;
+                if (ci >= 0) {
+                    id = li;
+                    i = ci;
+                    let a =  document.getElementsByClassName("LeadsList")[0];
+                    a.selectedIndex = id;
+                }else{
+                    id = document.getElementsByClassName("LeadsList")[0].value;
+                    let keys = Object.keys(leads[id].contacts);
+                    i = keys.length;
+                }
+                let name = document.getElementById ("Name").value;
+                let surname = document.getElementById ("Surname").value;
+                let bt = document.getElementById ("Business_Title").value;
+                let p_n1 = document.getElementById ("Phone_number_1").value;
+                let p_n2 = document.getElementById ("Phone_number_2").value;
+                leads[id].contacts[i] = new Contact (name, surname, bt, p_n1, p_n2);
+                document.getElementById("modal2").style.display = "none";
+                document.getElementsByClassName("LeadsList")[0].disabled = false;
+                if (ci >= 0) {
+                    ConTable (li);
+                };
+                li = ci = undefined
+            };
+            function NewLead() {
+                /*filling lead information*/
+                let id = leads.length;
+                let INN = document.getElementById("INN").value;
+                let title = document.getElementById("title").value;
+                let potential = document.getElementById("potential").value;
+                let active = "1";
+                let contacts = {};
+                leads[leads.length] = new Lead (id, INN, title, potential, active, contacts);    
+                /*First contact*/
+                PuPPanel (2);
+                /*adding Lead title to the contact lists*/ 
+                function LeadsListUpd (id, title) { 
+                    let LL = document.getElementsByClassName("LeadsList");             
+                    for (let i = 0; i < LL.length; i++) {
+                        let opt = document.createElement ("option");
+                        opt.value = id;
+                        opt.innerHTML = title;
+                        LL[i].append(opt);
+                        };
+                };
+                LeadsListUpd (id, title);
+                /*Next id*/               
+                id++;
+                /*Closing panel*/
+                document.getElementById("modal1").style.display = "none";
+            };
+            function EditLead (li) {
+                let id = li;
+                let INN = document.getElementById("INN_2").value;
+                let title = document.getElementById("title_2").value;
+                let potential = document.getElementById("potential_2").value;
+                let active = document.getElementById("Status").selectedIndex;
+                let contacts = leads[id]["contacts"];
+                leads[id] = new Lead (id, INN, title, potential, active, contacts );
+                document.getElementById("modal6").style.display = "none";
+                AllLeads (); 
+            }
+            function NewEvent (ni) {
+                let id;
+                if (ni >= 0 ) {
+                    id = ni;
+                }else{
+                    id = events.length;
+                }
+                let today = new Date();
+                let year = today.getFullYear ();
+                let month = today.getMonth () + 1;
+                if (month < 10) {
+                    month = "0" + month;
+                };
+                let day = today.getDate ();
+                if (day < 10) {
+                    day = "0" + day;
+                };
+                let date = year+"-"+month+"-"+day;
+                let reminderDate = document.getElementById("Date").value;
+                let optnumber = document.getElementsByClassName("LeadsList")[1].options.selectedIndex;
+                let title = document.getElementsByClassName("LeadsList")[1].options[optnumber].text;
+                let type = document.getElementsByClassName("EventType")[0].value;
+                let contact = document.getElementById("ContactList").value;
+                let commentData = document.getElementById("Comment").value;
+                let comment;
+                if (events[id] == undefined) {
+                    comment = {};
+                    comment[0]  = new Comment (date, commentData);                    
+                } else {
+                    if (commentData == ""){
+                        comment = events[id]["comment"]
+                    } else {
+                        comment = events[id]["comment"]
+                        let commentLenght = Object.keys(events[id]["comment"]).length;
+                        comment[commentLenght] = new Comment (date, commentData);
+                    }
+                }
+                events[id] = new Event (id, reminderDate, title, type, contact, comment); 
+                if (ni >= 0){
+                    addTable ();
+                }
+                document.getElementById("modal3").style.display = "none";
+                let LL = document.getElementsByClassName("LeadsList")[1];
+                LL.disabled = false;
+                ni = undefined;
+                document.getElementById("CommentList").innerText = "";
+            };
+            function ConTable (i) {
+                let table = document.getElementById("ConTable");
+                table.innerHTML = "";
+                let caption = document.createElement('caption');
+                caption.innerHTML = "Contact List";
+                let contact = leads[i]["contacts"];
+                for (let j = 0; j < Object.keys(contact).length; j++ ) {
+                    let tr = document.createElement('tr');
+                    let a = contact[j];
+                    for (let n = 0; n < 5; n ++) {
+                        if (n == 3) {
+                            let td = document.createElement('td');
+                            td.innerHTML = "edit";
+                            td.onclick = function editCont (){
+                                PuPPanel (2);
+                                document.getElementById("modal2").style.zIndex = 1;
+                                document.getElementById("Name").value = a["name"];
+                                document.getElementById("Surname").value = a["surname"];
+                                document.getElementById("Business_Title").value = a["bt"];
+                                document.getElementById("Phone_number_1").value = a["p_n1"];
+                                document.getElementById("Phone_number_2").value =  a["p_n2"];
+                                ci = j;
+                                document.getElementsByClassName("LeadsList")[0].disabled = true;
+                            };
+                            tr.appendChild(td);
+                        } else if (j == Object.keys(contact).length-1 && n == 4) {
+                            let td = document.createElement('td');
+                            td.innerHTML = "delete";
+                            td.onclick = function deleteCont (){
+                                delete contact[j];
+                                ConTable (li);
+                            };
+                            tr.appendChild(td);
+                        } else {
+                            let td = document.createElement('td');
+                            td.innerHTML = Object.values(a)[n];
+                            tr.appendChild(td);
+                        }
+                    };
+                table.appendChild (tr);
+                table.appendChild (caption);
+                };
+                li = i;
+            };
+            function AllLeads () {
+            let numb = 1;
+            let table = document.getElementById("table");
+            table.innerHTML = "";
+            let a = leads[0];
+            let caption = document.createElement('caption')
+            caption.innerText = "Leads List";
+            let tr = document.createElement('tr');
+                for (let t = 0; t < 5; t++) {
+                    if (t == 0) {
+                        let td = document.createElement('td');
+                        td.innerHTML = "#";
+                        tr.appendChild(td);
+                    } else {
+                        let td = document.createElement('td');
+                        td.innerHTML = Object.keys(a)[t];
+		                tr.appendChild(td);
+                    }
+                };    
+            table.appendChild(tr);
+            table.appendChild(caption);
+                let inputDate = document.getElementById("textbox").value;
+                for (let i = 0; i < leads.length; i++) {
+                    let lCheck = leads[i]["title"];
+                    let j = "";
+                    for (let b = 0; b < inputDate.length; b++){
+                        j = j + lCheck[b];
+                    }
+                    if (inputDate == j) {
+                        let a = leads[i];
+                        let tr = document.createElement('tr');
+                        for (let n = 0; n < 6; n++) {
+                                if (n == 0){
+                                    let td = document.createElement('td');
+                                    td.innerHTML = numb;
+                                    tr.appendChild(td);
+                                }else if (n == 5){
+                                    let td = document.createElement('td');
+                                    td.innerHTML = "details";
+                                    td.onclick = function editLead () {
+                                        PuPPanel (6);
+                                        document.getElementById("INN_2").value = leads[i]["INN"];
+                                        document.getElementById("title_2").value = leads[i]["title"];
+                                        document.getElementById("potential_2").value = leads[i]["potential"];
+                                        let status = document.getElementById("status");
+                                        Status.selectedIndex = leads[i]["active"];
+                                        ConTable (i);
+                                    };
+                                    tr.appendChild(td);
+                                }else if (n == 4){
+                                    let td = document.createElement('td');
+                                    if (Object.values(a)[n] == 1) {
+                                        td.innerHTML = true;
+                                    }else{
+                                        td.innerHTML = false;
+                                    };
+                                    tr.appendChild(td);
+                                }else{
+                                    let td = document.createElement('td');
+                                    td.innerHTML = Object.values(a)[n];
+                                    tr.appendChild(td);
+                                }
+                            };                
+                            table.appendChild(tr);
+                            numb++;
+                        } else {
+                            continue;
+                    };
+                };
+                document.getElementById("textbox").value = "";
+            }
+            let li = undefined;
+            let ni = undefined;
+            let ci = undefined;
+            function addTable () {
+                if (events == false){
+                    table.innerHTML = "";
+                }else{
+                    document.getElementById("modal4").style.display = "none";
+                    let numb = 0;
+                    let table = document.getElementById("table");
+                    table.innerHTML = "";
+                    let fd = document.getElementById("FromDate").value;
+                    let td = document.getElementById("ToDate").value;
+                    let cnumber = document.getElementsByClassName("LeadsList")[2].options.selectedIndex;
+                    let cc = document.getElementsByClassName("LeadsList")[2].options[cnumber].text;
+                    let typenumber = document.getElementsByClassName("EventType")[1].options.selectedIndex;
+                    let ct = document.getElementsByClassName("EventType")[1].options[typenumber].text;
+                    let a = events[0];
+                    let caption = document.createElement('caption')
+                    caption.innerText = "Events List";
+                    let tr = document.createElement('tr');
+                        for (let t = 0; t < 6; t++) {
+                            if (t == 0) {
+                                let td = document.createElement('td');
+                                td.innerHTML = "#";
+                                tr.appendChild(td);
+                            } else {
+                                let td = document.createElement('td');
+                                td.innerHTML = Object.keys(a)[t];
+                                tr.appendChild(td);
+                            }
+                        };    
+                    table.appendChild(tr);
+                    table.appendChild(caption);
+                    numb = 1;
+                    for (let i = 0; i < events.length; i++) {
+                        let a = events[i];
+                        let tr = document.createElement('tr');
+                        let sd = a.reminderDate;
+                        let sc = a.title;
+                        let st = a.type;
+                        for (let n = 0; n < 8; n++) {
+                            if ((fd <= sd  && td >= sd || fd <= sd && td == "") && (sc == cc || cc == "") && (ct == st || ct == "" )) {
+                                if (n == 0){
+                                    let td = document.createElement('td');
+                                    td.innerHTML = numb;
+                                    tr.appendChild(td);
+                                }else if (n == 5){
+                                    let td = document.createElement('td');
+                                    let commentLenght = Object.keys(a["comment"]).length;
+                                    td.innerHTML = a["comment"][commentLenght - 1]["commentData"];
+                                    tr.appendChild(td);
+                                    td.onclick = function addComment (){
+                                        PuPPanel (3);
+                                    }
+                                }else if (n == 6){
+                                    let td = document.createElement('td');
+                                    td.onclick = function edit () {
+                                        PuPPanel (3);
+                                        document.getElementById("Date").value = events[i]["reminderDate"];
+                                        let LL = document.getElementsByClassName("LeadsList")[1];
+                                        LL.options[0].innerText = events[i]["title"];
+                                        document.getElementsByClassName("EventType")[0].value = events[i]["type"];
+                                        document.getElementById("ContactList").value = events[i]["contact"] ;
+                                        let commentLenght = Object.keys(events[i]["comment"]).length;
+                                        document.getElementById("Comment").value = "";
+                                        GetContactEdit();
+                                        ni = i;
+                                        LL.disabled = true;
+                                        let CL = document.getElementById("CommentList");
+                                        for (let cli = 0; cli < commentLenght; cli ++ ){
+                                            let tr = document.createElement('tr');
+                                            let comm = events[i]["comment"][cli];
+                                            tr.innerHTML = comm["date"] + " " + comm["commentData"];
+                                            CL.appendChild(tr);
+                                        }
+                                        
+                                    };
+                                    td.innerHTML = "edit / next step";
+                                    tr.appendChild(td);
+                                } else if (n == 7) {
+                                    let td = document.createElement('td');
+                                    td.innerHTML = "delete";
+                                    td.onclick = function del (){
+                                        events.splice(i,1);
+                                            addTable();
+                                    }
+                                    tr.appendChild(td);
+                                } else {
+                                    let td = document.createElement('td');
+                                    td.innerHTML = Object.values(a)[n];
+                                    tr.appendChild(td);
+                                };
+                            }else{
+                                break;
+                            }
+                        };                
+                        table.appendChild(tr);
+                        numb++;
+                    }
+                }
+                
+            };
+        </script>
+        <div id="main_content">
+            <div class="PuPPanel" id="modal1">
+                <h1>Input Information</h1>
+                <a id="Close" onclick="CloseP (1)">X</a><br/>
+                <a>INN - </a><input id="INN" type="text" value=""><br/>
+                <a>Title - </a><input id="title" type="text" value=""><br/>
+                <a>Potential - </a><input id="potential" type="number" ><br/>
+                <input onclick="NewLead ()" type="submit">
+            </div> 
+            <div class="PuPPanel" id="modal2">
+                <h1>Input Contact</h1>
+                <a id="Close" onclick="CloseP (2)">x</a><br/>
+                <a>Title - </a><select class="LeadsList">
+                </select><br/>
+                <a>Name - </a><input id="Name" type="text" value=""><br/>
+                <a>Surname - </a><input id="Surname" type="text" value=""><br/>
+                <a>Business Title - </a><input id="Business_Title" value="" ><br/>
+                <a>Phone Number 1 - </a><input id="Phone_number_1" type="tel" ><br/>
+                <a>Phone Number 2 - </a><input id="Phone_number_2" type="tel" ><br/>
+                <input onclick="NewContact (li, ci)" type="submit">
+            </div>    
+            <div class="PuPPanel" id="modal3">
+                <h1>Input Event Info</h1>
+                <a id="Close" onclick="CloseP (3)">x</a><br/>
+                <a>Date - </a><input id="Date" type="date" value=""><br/>
+                <a>Company - </a><select onclick="GetContact (this)" class="LeadsList">
+                </select><br/>
+                <a>Type - </a><select class="EventType">
+                    <option id="1">Contact</option>
+                    <option id="2">Tender</option>
+                    <option id="3">Meeting</option> 
+                </select><br/>
+                <a>Contact - </a><select id="ContactList">
+                </select><br/>
+                <a>Comment </a><br/><textarea id="Comment"></textarea><br/>
+                <table id="CommentList"></table><br/>
+                <input onclick="NewEvent (ni)" type="submit">                
+            </div>
+            <div class="PuPPanel" id="modal4">
+                <h1>Events Sorting</h1>
+                <a id="Close" onclick="CloseP (4)">x</a><br/>
+                <a>From date - </a><input id="FromDate" type="Date" value=""><br/>
+                <a>To date - </a><input id="ToDate" type="Date" value=""><br/>
+                <a>Company - </a><select class="LeadsList">
+                    <option></option>
+                </select><br/>
+                <a>Type - </a><select class="EventType">
+                    <option></option>
+                    <option id="1">Contact</option>
+                    <option id="2">Tender</option>
+                    <option id="3">Meeting</option> 
+                </select><br/>
+                <input onclick="addTable ()" type="submit">                 
+            </div>
+            <div class="PuPPanel" id="modal6">
+                <h1>Input Information</h1>
+                <a id="Close" onclick="CloseP (6)">x</a><br/>
+                <a>INN - </a><input id="INN_2" type="text" value=""><br/>
+                <a>Title - </a><input id="title_2" type="text" value=""><br/>
+                <a>Potential - </a><input id="potential_2" type="number" ><br/>
+                <a>Status</a><select id="Status">
+                    <option> Unactive </option>
+                    <option> Active </option>
+                </select><br/>
+                <input onclick="EditLead (li)" type="submit">
+                <table id="ConTable">
+                </table>
+            </div>              
+            <div id="content">
+                <table id="table">
+                </table>
+            </div>
+            <div id="calendar">
+            </div>
+        </div>
+        </div>
+        <div id="sidebar">
+            <div id="search">
+                <h2>Leads Search</h2>
+                <input id="textbox" name="search" onsubmit="AllLeads ()" type="text"></input>
+                <input type="submit" placeholder="Search" onclick="AllLeads ()">
+            </div>
+    </body>
+</html>
